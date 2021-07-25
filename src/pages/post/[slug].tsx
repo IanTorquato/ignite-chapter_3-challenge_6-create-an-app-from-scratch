@@ -39,7 +39,7 @@ export default function Post(): ReactElement {
 
       <img
         className={styles.banner}
-        src="https://images8.alphacoders.com/115/1156488.png"
+        src="https://www.kotak.com/content/dam/Kotak/others/8tips-1440x400.jpg"
         alt=""
       />
 

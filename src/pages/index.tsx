@@ -74,6 +74,24 @@ export default function Home(): ReactElement {
             </div>
           </a>
         </Link>
+
+        <Link href="/post/1">
+          <a className={styles.post}>
+            <h1>Como utilizar Hooks</h1>
+
+            <p>Pensando em sincronização em vez de ciclos de vida.</p>
+
+            <div>
+              <div>
+                <FiCalendar /> 15 Mar de 2021
+              </div>
+
+              <div>
+                <FiUser /> Joseph Oliveira
+              </div>
+            </div>
+          </a>
+        </Link>
       </div>
 
       <button className={styles.morePosts} type="button">
