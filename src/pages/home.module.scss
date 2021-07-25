@@ -10,7 +10,6 @@
 
 .post {
   display: block;
-  height: 6.5rem;
   transition: filter 0.1s;
 
   &:hover {
@@ -24,7 +23,6 @@
   h1 {
     color: var(--heading);
     font-size: 1.75rem;
-    height: 2rem;
     letter-spacing: -0.5px;
     line-height: 2rem;
     margin-bottom: 0.5rem;

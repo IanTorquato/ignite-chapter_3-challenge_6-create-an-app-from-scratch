@@ -1,16 +1,14 @@
 import { GetStaticProps } from 'next';
 import Link from 'next/link';
-import { ReactElement } from 'react';
+import { ReactElement, useState } from 'react';
+import Prismic from '@prismicio/client';
+import { format } from 'date-fns';
+import ptBR from 'date-fns/locale/pt-BR';
 import { FiCalendar, FiUser } from 'react-icons/fi';
 
 import { getPrismicClient } from '../services/prismic';
-
 // import commonStyles from '../styles/common.module.scss';
 import styles from './home.module.scss';
-
-/*
-  Utilizar o método query para retornar todos os posts já com paginação. Por padrão, a paginação vem configurada como 20. Portanto se quiser testar sem ter que criar mais de 20 posts, altere a opção pageSize para o valor que deseja.
-*/
 
 interface Post {
   uid?: string;
@@ -31,7 +29,34 @@ interface HomeProps {
   postsPagination: PostPagination;
 }
 
-export default function Home(): ReactElement {
+function serializePostsDate(posts: Post[]): Post[] {
+  return posts.map(post => ({
+    ...post,
+    first_publication_date: format(
+      new Date(post.first_publication_date),
+      'dd MMM yyyy',
+      {
+        locale: ptBR,
+      }
+    ),
+  }));
+}
+
+export default function Home({ postsPagination }: HomeProps): ReactElement {
+  const [next_page, setNext_page] = useState(postsPagination.next_page);
+  const [results, setResults] = useState<Post[]>(
+    serializePostsDate(postsPagination.results)
+  );
+
+  function handleListMorePosts(): void {
+    fetch(next_page)
+      .then(res => res.json())
+      .then(res => {
+        setNext_page(res.next_page);
+        setResults(serializePostsDate([...results, ...res.results]));
+      });
+  }
+
   return (
     <div className={styles.container}>
       <header className={styles.header}>
@@ -39,71 +64,64 @@ export default function Home(): ReactElement {
       </header>
 
       <div>
-        <Link href="/post/1">
-          <a className={styles.post}>
-            <h1>Como utilizar Hooks</h1>
+        {results.map(post => (
+          <Link key={post.uid} href={`/post/${post.uid}`}>
+            <a className={styles.post}>
+              <h1>{post.data.title}</h1>
 
-            <p>Pensando em sincronização em vez de ciclos de vida.</p>
-
-            <div>
-              <div>
-                <FiCalendar /> 15 Mar de 2021
-              </div>
+              <p>{post.data.subtitle}</p>
 
               <div>
-                <FiUser /> Joseph Oliveira
+                <div>
+                  <FiCalendar /> {post.first_publication_date}
+                </div>
+
+                <div>
+                  <FiUser /> {post.data.author}
+                </div>
               </div>
-            </div>
-          </a>
-        </Link>
-
-        <Link href="/post/1">
-          <a className={styles.post}>
-            <h1>Como utilizar Hooks</h1>
-
-            <p>Pensando em sincronização em vez de ciclos de vida.</p>
-
-            <div>
-              <div>
-                <FiCalendar /> 15 Mar de 2021
-              </div>
-
-              <div>
-                <FiUser /> Joseph Oliveira
-              </div>
-            </div>
-          </a>
-        </Link>
-
-        <Link href="/post/1">
-          <a className={styles.post}>
-            <h1>Como utilizar Hooks</h1>
-
-            <p>Pensando em sincronização em vez de ciclos de vida.</p>
-
-            <div>
-              <div>
-                <FiCalendar /> 15 Mar de 2021
-              </div>
-
-              <div>
-                <FiUser /> Joseph Oliveira
-              </div>
-            </div>
-          </a>
-        </Link>
+            </a>
+          </Link>
+        ))}
       </div>
 
-      <button className={styles.morePosts} type="button">
-        Carregar mais posts
-      </button>
+      {next_page && (
+        <button
+          className={styles.morePosts}
+          type="button"
+          onClick={handleListMorePosts}
+        >
+          Carregar mais posts
+        </button>
+      )}
     </div>
   );
 }
 
-// export const getStaticProps = async () => {
-//   // const prismic = getPrismicClient();
-//   // const postsResponse = await prismic.query(TODO);
+export const getStaticProps: GetStaticProps = async () => {
+  const prismic = getPrismicClient();
+  const postsResponse = await prismic.query(
+    Prismic.predicates.at('document.type', 'posts'),
+    {
+      fetch: ['posts.title', 'posts.subtitle', 'posts.author'],
+      pageSize: 3,
+    }
+  );
 
-//   // TODO
-// };
+  const postsPagination = {
+    next_page: postsResponse.next_page,
+    results: postsResponse.results.map(post => ({
+      uid: post.uid,
+      first_publication_date: post.first_publication_date,
+      data: {
+        title: post.data.title,
+        subtitle: post.data.subtitle,
+        author: post.data.author,
+      },
+    })),
+  };
+
+  return {
+    props: { postsPagination },
+  };
+};
