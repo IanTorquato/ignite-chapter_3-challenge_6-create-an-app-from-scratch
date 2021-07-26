@@ -1,15 +1,15 @@
 import { GetStaticPaths, GetStaticProps } from 'next';
 import { ReactElement } from 'react';
+import Prismic from '@prismicio/client';
 import { FiCalendar, FiClock, FiUser } from 'react-icons/fi';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
+import { useRouter } from 'next/router';
 import Header from '../../components/Header';
 import { getPrismicClient } from '../../services/prismic';
-import commonStyles from '../../styles/common.module.scss';
+// import commonStyles from '../../styles/common.module.scss';
 import styles from './post.module.scss';
-
-/*
-  Utilizar o método query para buscar todos os posts e o getByUID para buscar as informações do post específico.
-*/
 
 interface Post {
   first_publication_date: string | null;
@@ -32,76 +32,118 @@ interface PostProps {
   post: Post;
 }
 
-export default function Post(): ReactElement {
+export default function Post({ post }: PostProps): ReactElement {
+  const router = useRouter();
+
+  function readingTime(): number {
+    const qtd = post.data.content.reduce((acc, contentValue) => {
+      const qtdHeading = contentValue.heading.split(/\s/g).length;
+
+      const qtdBody = contentValue.body.reduce((accBody, valueBody) => {
+        const bodyWords = valueBody.text.split(/\s/g).length;
+        return accBody + bodyWords;
+      }, 0);
+
+      return qtdHeading + qtdBody;
+    }, 0);
+    return Math.ceil(qtd / 200) + 1;
+  }
+
   return (
     <>
       <Header />
 
-      <img
-        className={styles.banner}
-        src="https://www.kotak.com/content/dam/Kotak/others/8tips-1440x400.jpg"
-        alt=""
-      />
+      {router.isFallback && <div>Carregando...</div>}
 
-      <article className={styles.post}>
-        <h1>Criando um app CRA do zero</h1>
+      {post && (
+        <>
+          <img
+            className={styles.banner}
+            src={post.data.banner.url}
+            alt={post.data.title}
+          />
 
-        <div className={styles.postInfos}>
-          <div>
-            <FiCalendar /> 15 Mar 2021
-          </div>
+          <article className={styles.post}>
+            <h1>{post.data.title}</h1>
 
-          <div>
-            <FiUser /> Joseph Oliveira
-          </div>
+            <div className={styles.postInfos}>
+              <div>
+                <FiCalendar />{' '}
+                {format(new Date(post.first_publication_date), 'dd MMM yyyy', {
+                  locale: ptBR,
+                })}
+              </div>
 
-          <div>
-            <FiClock /> 4 min
-          </div>
-        </div>
+              <div>
+                <FiUser /> {post.data.author}
+              </div>
 
-        <main className={styles.postContent}>
-          <div>
-            <h2>Proin et varius</h2>
+              <div>
+                <FiClock /> {readingTime()} min
+              </div>
+            </div>
 
-            <p className="content">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam
-              dolor sapien, vulputate eu diam at, condimentum hendrerit tellus.
-              Nam facilisis sodales felis, pharetra pharetra lectus auctor sed.
-              Ut venenatis mauris vel libero pretium, et pretium ligula
-              faucibus. Morbi nibh felis, elementum a posuere et, vulputate et
-              erat. Nam venenatis.
-            </p>
-          </div>
+            <main className={styles.postContent}>
+              {post.data.content.map(({ heading, body }) => (
+                <div key={heading}>
+                  <h2>{heading}</h2>
 
-          <div>
-            <h2>Cras laoreet mi</h2>
-
-            <p className="content">
-              Nulla auctor sit amet quam vitae commodo. Sed risus justo,
-              vulputate quis neque eget, dictum sodales sem. In eget felis
-              finibus, mattis magna a, efficitur ex. Curabitur vitae justo
-              consequat sapien gravida auctor a non risus. Sed malesuada mauris
-              nec orci congue, interdum efficitur urna dignissim. Vivamus cursus
-              elit sem, vel facilisis nulla pretium consectetur. Nunc congue.
-            </p>
-          </div>
-        </main>
-      </article>
+                  {body.map(({ text }) => (
+                    <p key={text}>{text}</p>
+                  ))}
+                </div>
+              ))}
+            </main>
+          </article>
+        </>
+      )}
     </>
   );
 }
 
-// export const getStaticPaths = async () => {
-//   const prismic = getPrismicClient();
-//   const posts = await prismic.query(TODO);
+export const getStaticPaths: GetStaticPaths = async () => {
+  const prismic = getPrismicClient();
+  const posts = await prismic.query(
+    Prismic.predicates.at('document.type', 'posts'),
+    {
+      fetch: [''],
+      pageSize: 3,
+    }
+  );
 
-//   // TODO
-// };
+  return {
+    paths: posts.results.map(post => ({
+      params: {
+        slug: post.uid,
+      },
+    })),
+    fallback: true,
+  };
+};
 
-// export const getStaticProps = async context => {
-//   const prismic = getPrismicClient();
-//   const response = await prismic.getByUID(TODO);
+export const getStaticProps: GetStaticProps = async context => {
+  const prismic = getPrismicClient();
+  const response = await prismic.getByUID(
+    'posts',
+    String(context.params.slug),
+    {}
+  );
 
-//   // TODO
-// };
+  const post = {
+    uid: response.uid,
+    first_publication_date: response.first_publication_date,
+    data: {
+      title: response.data.title,
+      subtitle: response.data.subtitle,
+      banner: {
+        url: response.data.banner.url,
+      },
+      author: response.data.author,
+      content: response.data.content,
+    },
+  };
+
+  return {
+    props: { post },
+  };
+};
