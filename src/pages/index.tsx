@@ -7,7 +7,6 @@ import ptBR from 'date-fns/locale/pt-BR';
 import { FiCalendar, FiUser } from 'react-icons/fi';
 
 import { getPrismicClient } from '../services/prismic';
-// import commonStyles from '../styles/common.module.scss';
 import styles from './home.module.scss';
 
 interface Post {
@@ -32,21 +31,13 @@ interface HomeProps {
 function serializePostsDate(posts: Post[]): Post[] {
   return posts.map(post => ({
     ...post,
-    first_publication_date: format(
-      new Date(post.first_publication_date),
-      'dd MMM yyyy',
-      {
-        locale: ptBR,
-      }
-    ),
+    first_publication_date: format(new Date(post.first_publication_date), 'dd MMM yyyy', { locale: ptBR }),
   }));
 }
 
 export default function Home({ postsPagination }: HomeProps): ReactElement {
   const [next_page, setNext_page] = useState(postsPagination.next_page);
-  const [results, setResults] = useState<Post[]>(
-    serializePostsDate(postsPagination.results)
-  );
+  const [results, setResults] = useState<Post[]>(serializePostsDate(postsPagination.results));
 
   function handleListMorePosts(): void {
     fetch(next_page)
@@ -86,11 +77,7 @@ export default function Home({ postsPagination }: HomeProps): ReactElement {
       </div>
 
       {next_page && (
-        <button
-          className={styles.morePosts}
-          type="button"
-          onClick={handleListMorePosts}
-        >
+        <button className={styles.morePosts} type="button" onClick={handleListMorePosts}>
           Carregar mais posts
         </button>
       )}
@@ -100,13 +87,10 @@ export default function Home({ postsPagination }: HomeProps): ReactElement {
 
 export const getStaticProps: GetStaticProps = async () => {
   const prismic = getPrismicClient();
-  const postsResponse = await prismic.query(
-    Prismic.predicates.at('document.type', 'posts'),
-    {
-      fetch: ['posts.title', 'posts.subtitle', 'posts.author'],
-      pageSize: 3,
-    }
-  );
+  const postsResponse = await prismic.query(Prismic.predicates.at('document.type', 'posts'), {
+    fetch: ['posts.title', 'posts.subtitle', 'posts.author'],
+    pageSize: 3,
+  });
 
   const postsPagination = {
     next_page: postsResponse.next_page,

@@ -11,15 +11,7 @@ describe('Header', () => {
     mockedPush.mockImplementation(() => Promise.resolve());
     const MockedRouterContext = RouterContext as React.Context<unknown>;
     RouterWrapper = ({ children }): JSX.Element => {
-      return (
-        <MockedRouterContext.Provider
-          value={{
-            push: mockedPush,
-          }}
-        >
-          {children}
-        </MockedRouterContext.Provider>
-      );
+      return <MockedRouterContext.Provider value={{ push: mockedPush }}>{children}</MockedRouterContext.Provider>;
     };
   });
 
@@ -30,18 +22,12 @@ describe('Header', () => {
   });
 
   it('should be able to navigate to home page after a click', () => {
-    render(<Header />, {
-      wrapper: RouterWrapper,
-    });
+    render(<Header />, { wrapper: RouterWrapper });
 
     const secondLink = screen.getByAltText('logo');
 
     fireEvent.click(secondLink);
 
-    expect(mockedPush).toHaveBeenCalledWith(
-      '/',
-      expect.anything(),
-      expect.anything()
-    );
+    expect(mockedPush).toHaveBeenCalledWith('/', expect.anything(), expect.anything());
   });
 });

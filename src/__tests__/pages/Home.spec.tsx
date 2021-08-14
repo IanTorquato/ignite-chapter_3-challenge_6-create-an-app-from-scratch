@@ -46,8 +46,7 @@ const mockedQueryReturn = {
       first_publication_date: '2021-03-25T19:27:35+0000',
       data: {
         title: 'Criando um app CRA do zero',
-        subtitle:
-          'Tudo sobre como criar a sua primeira aplicação utilizando Create React App',
+        subtitle: 'Tudo sobre como criar a sua primeira aplicação utilizando Create React App',
         author: 'Danilo Vieira',
       },
     },
@@ -67,21 +66,11 @@ describe('Home', () => {
     mockedPush.mockImplementation(() => Promise.resolve());
     const MockedRouterContext = RouterContext as React.Context<unknown>;
     RouterWrapper = ({ children }): JSX.Element => {
-      return (
-        <MockedRouterContext.Provider
-          value={{
-            push: mockedPush,
-          }}
-        >
-          {children}
-        </MockedRouterContext.Provider>
-      );
+      return <MockedRouterContext.Provider value={{ push: mockedPush }}>{children}</MockedRouterContext.Provider>;
     };
 
     mockedPrismic.mockReturnValue({
-      query: () => {
-        return Promise.resolve(mockedQueryReturn);
-      },
+      query: () => Promise.resolve(mockedQueryReturn),
     });
 
     mockedFetch.mockImplementation(() => {
@@ -95,8 +84,7 @@ describe('Home', () => {
                 first_publication_date: '2021-03-25T19:27:35+0000',
                 data: {
                   title: 'Criando um app CRA do zero',
-                  subtitle:
-                    'Tudo sobre como criar a sua primeira aplicação utilizando Create React App',
+                  subtitle: 'Tudo sobre como criar a sua primeira aplicação utilizando Create React App',
                   author: 'Danilo Vieira',
                 },
               },
@@ -111,13 +99,9 @@ describe('Home', () => {
 
     const getStaticPropsContext: GetStaticPropsContext<ParsedUrlQuery> = {};
 
-    const response = (await getStaticProps(
-      getStaticPropsContext
-    )) as GetStaticPropsResult;
+    const response = (await getStaticProps(getStaticPropsContext)) as GetStaticPropsResult;
 
-    expect(response.props.postsPagination.next_page).toEqual(
-      postsPaginationReturn.next_page
-    );
+    expect(response.props.postsPagination.next_page).toEqual(postsPaginationReturn.next_page);
     expect(response.props.postsPagination.results).toEqual(
       expect.arrayContaining([
         expect.objectContaining(postsPaginationReturn.results[0]),
@@ -137,9 +121,7 @@ describe('Home', () => {
     screen.getByText('Joseph Oliveira');
 
     screen.getByText('Criando um app CRA do zero');
-    screen.getByText(
-      'Tudo sobre como criar a sua primeira aplicação utilizando Create React App'
-    );
+    screen.getByText('Tudo sobre como criar a sua primeira aplicação utilizando Create React App');
     screen.getByText('15 mar 2021');
     screen.getByText('Danilo Vieira');
   });
@@ -147,9 +129,7 @@ describe('Home', () => {
   it('should be able to navigate to post page after a click', () => {
     const postsPagination = mockedQueryReturn;
 
-    render(<App postsPagination={postsPagination} />, {
-      wrapper: RouterWrapper,
-    });
+    render(<App postsPagination={postsPagination} />, { wrapper: RouterWrapper });
 
     const firstPostTitle = screen.getByText('Como utilizar Hooks');
     const secondPostTitle = screen.getByText('Criando um app CRA do zero');
@@ -157,18 +137,8 @@ describe('Home', () => {
     fireEvent.click(firstPostTitle);
     fireEvent.click(secondPostTitle);
 
-    expect(mockedPush).toHaveBeenNthCalledWith(
-      1,
-      '/post/como-utilizar-hooks',
-      expect.anything(),
-      expect.anything()
-    );
-    expect(mockedPush).toHaveBeenNthCalledWith(
-      2,
-      '/post/criando-um-app-cra-do-zero',
-      expect.anything(),
-      expect.anything()
-    );
+    expect(mockedPush).toHaveBeenNthCalledWith(1, '/post/como-utilizar-hooks', expect.anything(), expect.anything());
+    expect(mockedPush).toHaveBeenNthCalledWith(2, '/post/criando-um-app-cra-do-zero', expect.anything(), expect.anything());
   });
 
   it('should be able to load more posts if available', async () => {

@@ -8,7 +8,6 @@ import { ptBR } from 'date-fns/locale';
 import { useRouter } from 'next/router';
 import Header from '../../components/Header';
 import { getPrismicClient } from '../../services/prismic';
-// import commonStyles from '../../styles/common.module.scss';
 import styles from './post.module.scss';
 
 interface Post {
@@ -57,11 +56,7 @@ export default function Post({ post }: PostProps): ReactElement {
 
       {post && (
         <>
-          <img
-            className={styles.banner}
-            src={post.data.banner.url}
-            alt={post.data.title}
-          />
+          <img className={styles.banner} src={post.data.banner.url} alt={post.data.title} />
 
           <article className={styles.post}>
             <h1>{post.data.title}</h1>
@@ -103,13 +98,10 @@ export default function Post({ post }: PostProps): ReactElement {
 
 export const getStaticPaths: GetStaticPaths = async () => {
   const prismic = getPrismicClient();
-  const posts = await prismic.query(
-    Prismic.predicates.at('document.type', 'posts'),
-    {
-      fetch: [''],
-      pageSize: 3,
-    }
-  );
+  const posts = await prismic.query(Prismic.predicates.at('document.type', 'posts'), {
+    fetch: [''],
+    pageSize: 3,
+  });
 
   return {
     paths: posts.results.map(post => ({
@@ -123,11 +115,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
 export const getStaticProps: GetStaticProps = async context => {
   const prismic = getPrismicClient();
-  const response = await prismic.getByUID(
-    'posts',
-    String(context.params.slug),
-    {}
-  );
+  const response = await prismic.getByUID('posts', String(context.params.slug), {});
 
   const post = {
     uid: response.uid,
